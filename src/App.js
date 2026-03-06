@@ -1,20 +1,82 @@
-import { useState } from "react";
+import React { useState } from "react";
 
 const COLORS = {
-  bg: "#0a0f0d",
-  card: "#111a14",
-  cardBorder: "#1e2e22",
-  accent: "#4ade80",
-  accentGlow: "rgba(74,222,128,0.15)",
-  warn: "#fb923c",
-  danger: "#f87171",
-  text: "#e2f0e6",
-  textMuted: "#6b8f74",
-  textDim: "#9ab8a0",
+  bg: "#f7f3ed",
+  bgWarm: "#fdf9f4",
+  card: "#ffffff",
+  cardBorder: "#e8dfd4",
+  cardShadow: "0 2px 12px rgba(120,80,40,0.07)",
+  accent: "#3d8f5f",
+  accentLight: "#e8f5ee",
+  accentGlow: "rgba(61,143,95,0.12)",
+  warn: "#c96a1a",
+  warnLight: "#fef0e6",
+  danger: "#c0392b",
+  dangerLight: "#fdecea",
+  text: "#2d2416",
+  textMuted: "#8a7560",
+  textDim: "#5a4a35",
+  leaf1: "#4a9e6a",
+  leaf2: "#2d7a4f",
+  tomato: "#e05a3a",
+  carrot: "#e8832a",
+  broccoli: "#3a8a4a",
+  lemon: "#d4a820",
+  border2: "#d4c9bc",
 };
 
-const FONT = "'DM Mono', 'Courier New', monospace";
+const FONT = "'Lora', Georgia, serif";
 const FONT_DISPLAY = "'Playfair Display', Georgia, serif";
+const FONT_MONO = "'DM Mono', monospace";
+
+// Vegetable SVG illustrations
+const VegIllustrations = {
+  broccoli: (size=32) => (
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+      <circle cx="11" cy="10" r="6" fill="#4a9e6a"/>
+      <circle cx="19" cy="8" r="5" fill="#3a8a4a"/>
+      <circle cx="16" cy="13" r="6" fill="#5aae7a"/>
+      <rect x="14" y="17" width="4" height="10" rx="2" fill="#6b4226"/>
+      <rect x="12" y="21" width="2" height="5" rx="1" fill="#7a5230" transform="rotate(-15 12 21)"/>
+      <rect x="18" y="20" width="2" height="5" rx="1" fill="#7a5230" transform="rotate(15 18 20)"/>
+    </svg>
+  ),
+  carrot: (size=32) => (
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+      <path d="M16 28 L10 8 Q16 4 22 8 Z" fill="#e8832a"/>
+      <path d="M16 28 L13 14 Q16 10 19 14 Z" fill="#f09040"/>
+      <path d="M14 6 Q12 2 8 4" stroke="#4a9e6a" strokeWidth="2" strokeLinecap="round" fill="none"/>
+      <path d="M16 5 Q16 1 16 1" stroke="#3a8a4a" strokeWidth="2" strokeLinecap="round" fill="none"/>
+      <path d="M18 6 Q20 2 24 4" stroke="#5aae7a" strokeWidth="2" strokeLinecap="round" fill="none"/>
+    </svg>
+  ),
+  tomato: (size=32) => (
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="18" r="11" fill="#e05a3a"/>
+      <circle cx="16" cy="18" r="11" fill="url(#tg)" opacity="0.3"/>
+      <path d="M16 7 Q14 4 10 5" stroke="#4a9e6a" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+      <path d="M16 7 Q18 4 22 5" stroke="#3a8a4a" strokeWidth="2" strokeLinecap="round" fill="none"/>
+      <path d="M16 7 L16 10" stroke="#4a9e6a" strokeWidth="2.5" strokeLinecap="round"/>
+      <ellipse cx="20" cy="15" rx="2" ry="4" fill="white" opacity="0.2" transform="rotate(-20 20 15)"/>
+      <defs><radialGradient id="tg" cx="30%" cy="30%"><stop offset="0%" stopColor="white"/><stop offset="100%" stopColor="transparent"/></radialGradient></defs>
+    </svg>
+  ),
+  leaf: (size=28) => (
+    <svg width={size} height={size} viewBox="0 0 28 28" fill="none">
+      <path d="M14 24 Q4 18 6 8 Q14 2 22 8 Q24 18 14 24Z" fill="#4a9e6a"/>
+      <path d="M14 24 Q14 14 14 6" stroke="#2d7a4f" strokeWidth="1.5" fill="none"/>
+      <path d="M14 14 Q10 11 8 12" stroke="#2d7a4f" strokeWidth="1" fill="none"/>
+      <path d="M14 18 Q18 15 20 16" stroke="#2d7a4f" strokeWidth="1" fill="none"/>
+    </svg>
+  ),
+  avocado: (size=32) => (
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+      <path d="M16 28 Q8 26 8 16 Q8 6 16 4 Q24 6 24 16 Q24 26 16 28Z" fill="#4a9e6a"/>
+      <path d="M16 26 Q10 24 10 16 Q10 8 16 6 Q22 8 22 16 Q22 24 16 26Z" fill="#7dc47a"/>
+      <ellipse cx="16" cy="18" rx="5" ry="6" fill="#c8913a"/>
+    </svg>
+  ),
+};
 
 const DAYS = ["Lun", "Mar", "Mie", "Joi", "Vin", "Sâm", "Dum"];
 const DAYS_KEYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -110,15 +172,15 @@ function calcTDEE(profile) {
 function NutritionBar({ label, value, max, color }) {
   const pct = Math.min(100, Math.round((value / max) * 100));
   return (
-    <div style={{ marginBottom: 9 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: COLORS.textMuted, marginBottom: 3, fontFamily: FONT }}>
+    <div style={{ marginBottom: 10 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: COLORS.textMuted, marginBottom: 4, fontFamily: FONT_MONO }}>
         <span>{label}</span><span style={{ color: COLORS.textDim }}>{value}g / {max}g</span>
       </div>
-      <div style={{ background: "#1a2b1e", borderRadius: 4, height: 5, overflow: "hidden" }}>
+      <div style={{ background: "#ede6dc", borderRadius: 6, height: 7, overflow: "hidden" }}>
         <div style={{
-          height: "100%", borderRadius: 4, width: `${pct}%`,
-          background: pct > 90 ? COLORS.danger : pct > 70 ? COLORS.warn : color,
-          transition: "width 0.5s ease", boxShadow: `0 0 6px ${color}60`,
+          height: "100%", borderRadius: 6, width: `${pct}%`,
+          background: pct > 95 ? COLORS.danger : pct > 75 ? COLORS.warn : color,
+          transition: "width 0.6s cubic-bezier(0.4,0,0.2,1)",
         }} />
       </div>
     </div>
@@ -126,11 +188,11 @@ function NutritionBar({ label, value, max, color }) {
 }
 
 function Card({ children, style = {} }) {
-  return <div style={{ background: COLORS.card, border: `1px solid ${COLORS.cardBorder}`, borderRadius: 12, padding: "16px 18px", ...style }}>{children}</div>;
+  return <div style={{ background: COLORS.card, border: `1px solid ${COLORS.cardBorder}`, borderRadius: 16, padding: "18px 20px", boxShadow: COLORS.cardShadow, ...style }}>{children}</div>;
 }
 
 function SLabel({ children }) {
-  return <div style={{ fontSize: 9, color: COLORS.textMuted, letterSpacing: "0.1em", marginBottom: 8 }}>{children}</div>;
+  return <div style={{ fontSize: 9, color: COLORS.textMuted, letterSpacing: "0.12em", marginBottom: 8, fontFamily: FONT_MONO, textTransform: "uppercase" }}>{children}</div>;
 }
 
 export default function App() {
@@ -143,6 +205,9 @@ export default function App() {
   const [aiAdvice, setAiAdvice] = useState("");
   const [mealAnalysis, setMealAnalysis] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
+  const [mealIdeas, setMealIdeas] = useState([]);
+  const [ideasLoading, setIdeasLoading] = useState(false);
+  const [mealType, setMealType] = useState("toate");
 
   const tdee = calcTDEE(profile);
   const totalCals    = meals.reduce((s, m) => s + (m.calories || 0), 0);
@@ -253,51 +318,91 @@ Scrie 3-4 paragrafe de sfaturi acționabile. Dacă are skin_barrier sau acne_sug
     setAiLoading(false);
   }
 
+
+  async function getMealIdeas() {
+    setIdeasLoading(true); setMealIdeas([]);
+    const conds = profile.conditions.length ? `Condiții medicale: ${profile.conditions.join(", ")}.` : "";
+    const goals = profile.goals?.length ? `Obiective: ${profile.goals.join(", ")}.` : "";
+    const calsRemaining = tdee ? Math.max(0, tdee - totalCals) : 500;
+    const actCtx = `Activitate azi: ${todayActLabel}. Mâine: ${tomorrowActLabel}.`;
+    const typeCtx = mealType !== "toate" ? `Tip masă dorit: ${mealType}.` : "";
+    const prompt = `Ești nutriționist. Generează 4 idei de mese personalizate în română. ${conds} ${goals} ${actCtx} ${typeCtx} Calorii rămase azi: ${calsRemaining} kcal. Alergii: ${profile.allergies || "niciuna"}.
+Răspunde DOAR cu un array JSON, fără markdown:
+[{"name":"Nume masă","calories":number,"protein":number,"carbs":number,"fat":number,"ingredients":["ingredient 1","ingredient 2","ingredient 3"],"tip":"sfat scurt de 1 propoziție"}]
+Asigură-te că fiecare masă e potrivită pentru condițiile medicale și obiective. Variază tipurile (mic dejun, prânz, cină, gustare).`;
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2000, messages: [{ role: "user", content: prompt }] }),
+      });
+      const data = await res.json();
+      const text = data.content?.map(i => i.text || "").join("") || "";
+      setMealIdeas(JSON.parse(text.replace(/```json|```/g, "").trim()));
+    } catch {
+      setMealIdeas([{ error: "Nu s-au putut genera idei. Încearcă din nou." }]);
+    }
+    setIdeasLoading(false);
+  }
+
   const inputStyle = {
-    background: "#0d1810", border: `1px solid ${COLORS.cardBorder}`, borderRadius: 7,
-    padding: "8px 12px", color: COLORS.text, fontFamily: FONT, fontSize: 12,
+    background: "#faf6f1", border: `1px solid ${COLORS.cardBorder}`, borderRadius: 10,
+    padding: "9px 13px", color: COLORS.text, fontFamily: FONT, fontSize: 13,
     width: "100%", boxSizing: "border-box", outline: "none",
+    boxShadow: "inset 0 1px 3px rgba(120,80,40,0.06)",
   };
 
   const tabBtn = (active) => ({
-    padding: "6px 14px", borderRadius: 20, cursor: "pointer", fontFamily: FONT, fontSize: 11,
-    border: active ? `1px solid ${COLORS.accent}40` : "1px solid transparent",
-    background: active ? COLORS.accentGlow : "transparent",
-    color: active ? COLORS.accent : COLORS.textMuted, transition: "all 0.2s",
+    padding: "7px 16px", borderRadius: 22, cursor: "pointer", fontFamily: FONT_MONO, fontSize: 11,
+    border: active ? `1.5px solid ${COLORS.accent}` : `1px solid ${COLORS.cardBorder}`,
+    background: active ? COLORS.accent : COLORS.card,
+    color: active ? "white" : COLORS.textMuted,
+    transition: "all 0.2s", fontWeight: active ? 500 : 400,
+    boxShadow: active ? "0 2px 8px rgba(61,143,95,0.25)" : "none",
   });
 
   const toggleBtn = (active, color = COLORS.accent) => ({
-    padding: "7px 11px", borderRadius: 7, cursor: "pointer", textAlign: "left",
-    border: `1px solid ${active ? color + "50" : COLORS.cardBorder}`,
-    background: active ? `${color}14` : "transparent",
-    color: active ? color : COLORS.textMuted, fontFamily: FONT, fontSize: 11, transition: "all 0.2s",
+    padding: "8px 12px", borderRadius: 10, cursor: "pointer", textAlign: "left",
+    border: `1.5px solid ${active ? color : COLORS.cardBorder}`,
+    background: active ? (color === COLORS.accent ? COLORS.accentLight : COLORS.warnLight) : COLORS.bgWarm,
+    color: active ? color : COLORS.textMuted, fontFamily: FONT, fontSize: 12, transition: "all 0.2s",
   });
 
   return (
     <div style={{
       minHeight: "100vh", background: COLORS.bg, color: COLORS.text, fontFamily: FONT, padding: "22px 14px",
-      backgroundImage: "radial-gradient(ellipse at 15% 15%, rgba(74,222,128,0.05) 0%, transparent 55%)",
+      backgroundImage: `
+        radial-gradient(ellipse at 90% 10%, rgba(74,158,106,0.08) 0%, transparent 40%),
+        radial-gradient(ellipse at 5% 85%, rgba(232,131,42,0.06) 0%, transparent 40%),
+        radial-gradient(ellipse at 50% 50%, rgba(212,168,32,0.04) 0%, transparent 60%)
+      `,
     }}>
-      <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:wght@400;500;600&display=swap" rel="stylesheet" />
       <div style={{ maxWidth: 680, margin: "0 auto" }}>
 
         {/* ── Header ── */}
-        <div style={{ marginBottom: 22, borderBottom: `1px solid ${COLORS.cardBorder}`, paddingBottom: 16 }}>
+        <div style={{ marginBottom: 24, paddingBottom: 18, borderBottom: `1px solid ${COLORS.cardBorder}`, position: "relative" }}>
+          {/* Decorative veggie strip */}
+          <div style={{ position: "absolute", right: 0, top: -4, display: "flex", gap: 4, opacity: 0.7 }}>
+            {VegIllustrations.broccoli(28)}
+            {VegIllustrations.tomato(28)}
+            {VegIllustrations.carrot(28)}
+            {VegIllustrations.avocado(28)}
+          </div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-            <h1 style={{ fontFamily: FONT_DISPLAY, fontSize: 26, fontWeight: 700, margin: 0, color: COLORS.accent }}>NutriCare</h1>
-            <span style={{ fontSize: 10, color: COLORS.textMuted, letterSpacing: "0.1em" }}>TRACKER NUTRIȚIONAL AI</span>
+            <h1 style={{ fontFamily: FONT_DISPLAY, fontSize: 28, fontWeight: 700, margin: 0, color: COLORS.accent, letterSpacing: "-0.02em" }}>NutriCare</h1>
+            <span style={{ fontSize: 10, color: COLORS.textMuted, letterSpacing: "0.12em", fontFamily: FONT_MONO }}>TRACKER AI</span>
           </div>
           {profileSaved && profile.name && (
-            <p style={{ margin: "4px 0 0", fontSize: 11, color: COLORS.textMuted }}>
-              Bună, <span style={{ color: COLORS.textDim }}>{profile.name}</span> · Azi ({getTodayDisplayDay()}): <span style={{ color: COLORS.accent }}>{todayActLabel}</span>
+            <p style={{ margin: "5px 0 0", fontSize: 12, color: COLORS.textMuted, fontFamily: FONT }}>
+              Bună, <span style={{ color: COLORS.accent, fontWeight: 600 }}>{profile.name}</span> · Azi ({getTodayDisplayDay()}): <span style={{ color: COLORS.accent }}>{todayActLabel}</span>
               {profile.goals?.length > 0 && <> · {profile.goals.map(g => GOALS.find(x => x.id === g)?.label).filter(Boolean).join(", ")}</>}
             </p>
           )}
         </div>
 
         {/* ── Tabs ── */}
-        <div style={{ display: "flex", gap: 6, marginBottom: 18, flexWrap: "wrap" }}>
-          {[["tracker", "Jurnal Azi"], ["advisor", "Sfaturi AI"], ["profile", "Profilul Meu"]].map(([id, lbl]) => (
+        <div style={{ display: "flex", gap: 7, marginBottom: 20, flexWrap: "wrap" }}>
+          {[["tracker", "Jurnal Azi"], ["ideas", "Idei Mese"], ["advisor", "Sfaturi AI"], ["profile", "Profilul Meu"]].map(([id, lbl]) => (
             <button key={id} onClick={() => setTab(id)} style={tabBtn(tab === id)}>{lbl}</button>
           ))}
         </div>
@@ -310,24 +415,24 @@ Scrie 3-4 paragrafe de sfaturi acționabile. Dacă are skin_barrier sau acne_sug
             {/* Activity banner */}
             {todayExtra > 0 && (
               <div style={{
-                marginBottom: 8, padding: "9px 14px", borderRadius: 8,
-                border: `1px solid ${COLORS.accent}30`, background: COLORS.accentGlow,
+                marginBottom: 8, padding: "10px 14px", borderRadius: 12,
+                border: `1.5px solid ${COLORS.accent}40`, background: COLORS.accentLight,
                 display: "flex", alignItems: "center", justifyContent: "space-between",
               }}>
-                <span style={{ fontSize: 11, color: COLORS.accent }}>🏃 Azi: {todayActLabel}</span>
-                <span style={{ fontSize: 11, color: COLORS.accent }}>+{todayExtra} kcal arse</span>
+                <span style={{ fontSize: 12, color: COLORS.accent, fontFamily: FONT }}>🏃 Azi: {todayActLabel}</span>
+                <span style={{ fontSize: 12, color: COLORS.accent, fontFamily: FONT_MONO, fontWeight: 500 }}>+{todayExtra} kcal arse</span>
               </div>
             )}
 
             {/* Tomorrow banner */}
             {tomorrowIsActive && (
               <div style={{
-                marginBottom: 10, padding: "9px 14px", borderRadius: 8,
-                border: `1px solid ${COLORS.warn}30`, background: `${COLORS.warn}0d`,
+                marginBottom: 12, padding: "10px 14px", borderRadius: 12,
+                border: `1.5px solid ${COLORS.warn}40`, background: COLORS.warnLight,
                 display: "flex", alignItems: "center", justifyContent: "space-between",
               }}>
-                <span style={{ fontSize: 11, color: COLORS.warn }}>⚡ Mâine ({tomorrowDisplayDay}): {tomorrowActLabel}</span>
-                <span style={{ fontSize: 10, color: COLORS.textMuted }}>pregătire activă</span>
+                <span style={{ fontSize: 12, color: COLORS.warn, fontFamily: FONT }}>⚡ Mâine ({tomorrowDisplayDay}): {tomorrowActLabel}</span>
+                <span style={{ fontSize: 10, color: COLORS.textMuted, fontFamily: FONT_MONO }}>pregătire activă</span>
               </div>
             )}
 
@@ -336,7 +441,7 @@ Scrie 3-4 paragrafe de sfaturi acționabile. Dacă are skin_barrier sau acne_sug
               <Card style={{ marginBottom: 12, display: "flex", gap: 18, alignItems: "center", flexWrap: "wrap" }}>
                 <div style={{ position: "relative", width: 82, height: 82, flexShrink: 0 }}>
                   <svg width="82" height="82" viewBox="0 0 82 82">
-                    <circle cx="41" cy="41" r="32" fill="none" stroke="#1a2b1e" strokeWidth="7" />
+                    <circle cx="41" cy="41" r="32" fill="none" stroke="#ede6dc" strokeWidth="7" />
                     <circle cx="41" cy="41" r="32" fill="none"
                       stroke={calPct > 100 ? COLORS.danger : COLORS.accent} strokeWidth="7"
                       strokeDasharray={`${2 * Math.PI * 32}`}
@@ -350,15 +455,15 @@ Scrie 3-4 paragrafe de sfaturi acționabile. Dacă are skin_barrier sau acne_sug
                   </div>
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 20, fontFamily: FONT_DISPLAY, color: COLORS.text }}>
-                    {totalCals} <span style={{ fontSize: 11, color: COLORS.textMuted }}>kcal consumate</span>
+                  <div style={{ fontSize: 22, fontFamily: FONT_DISPLAY, color: COLORS.text, fontWeight: 600 }}>
+                    {totalCals} <span style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 400 }}>kcal consumate</span>
                   </div>
-                  <div style={{ fontSize: 10, color: COLORS.textMuted, marginBottom: 2 }}>
-                    Țintă zilnică: <span style={{ color: COLORS.textDim }}>{tdee} kcal</span>
-                    {todayExtra > 0 && <span style={{ color: COLORS.accent }}> (incl. {todayExtra} kcal activitate)</span>}
+                  <div style={{ fontSize: 11, color: COLORS.textMuted, marginBottom: 2, fontFamily: FONT }}>
+                    Țintă: <span style={{ color: COLORS.textDim, fontWeight: 600 }}>{tdee} kcal</span>
+                    {todayExtra > 0 && <span style={{ color: COLORS.accent }}> (+{todayExtra} activitate)</span>}
                   </div>
-                  <div style={{ fontSize: 10, color: calsLeft > 0 ? COLORS.textDim : COLORS.danger, marginBottom: 8 }}>
-                    {calsLeft > 0 ? `✓ Mai ai ${calsLeft} kcal disponibile` : `⚠ Ai depășit cu ${Math.abs(calsLeft || 0)} kcal`}
+                  <div style={{ fontSize: 11, color: calsLeft > 0 ? COLORS.accent : COLORS.danger, marginBottom: 10, fontWeight: 500 }}>
+                    {calsLeft > 0 ? `✓ Mai ai ${calsLeft} kcal` : `⚠ Depășit cu ${Math.abs(calsLeft || 0)} kcal`}
                   </div>
                   <NutritionBar label="Proteine" value={totalProtein} max={proteinTarget} color={COLORS.accent} />
                   <NutritionBar label="Carbohidrați" value={totalCarbs} max={carbTarget} color="#60a5fa" />
@@ -371,9 +476,9 @@ Scrie 3-4 paragrafe de sfaturi acționabile. Dacă are skin_barrier sau acne_sug
             <Card style={{ marginBottom: 12 }}>
               <SLabel>ÎNREGISTREAZĂ O MASĂ</SLabel>
               {(todayExtra > 0 || tomorrowIsActive) && (
-                <div style={{ fontSize: 10, color: COLORS.textMuted, marginBottom: 8, padding: "6px 9px", background: "#0d1810", borderRadius: 5, borderLeft: `2px solid ${COLORS.accent}50` }}>
-                  {todayExtra > 0 && <div>💪 Ai făcut <span style={{ color: COLORS.accent }}>{todayActLabel}</span> azi — analiza recomandă proteine și carbohidrați pentru recuperare.</div>}
-                  {tomorrowIsActive && <div style={{ marginTop: todayExtra > 0 ? 4 : 0 }}>⚡ Mâine ai <span style={{ color: COLORS.warn }}>{tomorrowActLabel}</span> — analiza va sugera și alimente pentru pregătire (carbo-loading, hidratare).</div>}
+                <div style={{ fontSize: 10, color: COLORS.textMuted, marginBottom: 8, padding: "6px 9px", background: COLORS.accentLight, borderRadius: 8, borderLeft: `3px solid ${COLORS.accent}` }}>
+                  {todayExtra > 0 && <div style={{ color: COLORS.textDim }}>💪 Ai făcut <span style={{ color: COLORS.accent, fontWeight: 600 }}>{todayActLabel}</span> azi — analiza recomandă proteine și carbohidrați pentru recuperare.</div>}
+                  {tomorrowIsActive && <div style={{ marginTop: todayExtra > 0 ? 4 : 0, color: COLORS.textDim }}>⚡ Mâine ai <span style={{ color: COLORS.warn, fontWeight: 600 }}>{tomorrowActLabel}</span> — analiza va sugera alimente pentru pregătire.</div>}
                 </div>
               )}
               <div style={{ display: "flex", gap: 7 }}>
@@ -382,15 +487,16 @@ Scrie 3-4 paragrafe de sfaturi acționabile. Dacă are skin_barrier sau acne_sug
                   placeholder="ex: 2 ouă cu pâine prăjită și cafea..."
                   style={{ ...inputStyle, flex: 1 }} />
                 <button onClick={analyzeMeal} disabled={analyzing || !mealInput.trim()} style={{
-                  padding: "8px 13px", borderRadius: 7, border: "none", cursor: "pointer",
-                  background: analyzing ? "#1a2b1e" : COLORS.accent,
-                  color: analyzing ? COLORS.textMuted : "#0a0f0d",
-                  fontFamily: FONT, fontSize: 11, fontWeight: 500, whiteSpace: "nowrap",
+                  padding: "9px 15px", borderRadius: 10, border: "none", cursor: "pointer",
+                  background: analyzing ? COLORS.cardBorder : COLORS.accent,
+                  color: analyzing ? COLORS.textMuted : "white",
+                  fontFamily: FONT, fontSize: 12, fontWeight: 600, whiteSpace: "nowrap",
+                  boxShadow: analyzing ? "none" : "0 2px 8px rgba(61,143,95,0.3)",
                 }}>{analyzing ? "Se analizează..." : "Analizează →"}</button>
               </div>
 
               {mealAnalysis && !mealAnalysis.error && (
-                <div style={{ marginTop: 11, padding: 13, background: "#0d1810", borderRadius: 8, border: `1px solid ${COLORS.cardBorder}` }}>
+                <div style={{ marginTop: 11, padding: 14, background: COLORS.bgWarm, borderRadius: 12, border: `1.5px solid ${COLORS.cardBorder}` }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 7 }}>
                     <div>
                       <div style={{ fontFamily: FONT_DISPLAY, fontSize: 14, color: COLORS.text }}>{mealAnalysis.name}</div>
@@ -420,8 +526,9 @@ Scrie 3-4 paragrafe de sfaturi acționabile. Dacă are skin_barrier sau acne_sug
                     </div>
                   )}
                   <button onClick={addMealToLog} style={{
-                    width: "100%", padding: "7px", borderRadius: 6, border: `1px solid ${COLORS.accent}40`,
-                    background: COLORS.accentGlow, color: COLORS.accent, fontFamily: FONT, fontSize: 11, cursor: "pointer",
+                    width: "100%", padding: "9px", borderRadius: 9, border: "none",
+                    background: COLORS.accent, color: "white", fontFamily: FONT, fontSize: 12, cursor: "pointer",
+                    fontWeight: 600, boxShadow: "0 2px 8px rgba(61,143,95,0.25)",
                   }}>+ Adaugă în jurnal</button>
                 </div>
               )}
@@ -459,9 +566,124 @@ Scrie 3-4 paragrafe de sfaturi acționabile. Dacă are skin_barrier sau acne_sug
               </Card>
             )}
             {meals.length === 0 && !mealAnalysis && (
-              <div style={{ textAlign: "center", padding: "34px 0", color: COLORS.textMuted, fontSize: 11 }}>
-                <div style={{ fontSize: 24, marginBottom: 6 }}>🥗</div>
+              <div style={{ textAlign: "center", padding: "34px 0", color: COLORS.textMuted, fontSize: 12, fontFamily: FONT }}>
+                <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 12, opacity: 0.5 }}>
+                  {VegIllustrations.avocado(34)}
+                  {VegIllustrations.leaf(30)}
+                  {VegIllustrations.tomato(34)}
+                </div>
                 Înregistrează prima masă de mai sus
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════
+            TAB: IDEI DE MESE
+        ══════════════════════════════════════ */}
+        {tab === "ideas" && (
+          <div>
+            <Card style={{ marginBottom: 12 }}>
+              <SLabel>IDEI DE MESE PERSONALIZATE</SLabel>
+              <p style={{ fontSize: 11, color: COLORS.textDim, margin: "0 0 12px", lineHeight: 1.7 }}>
+                AI generează 4 idei de mese adaptate profilului tău, condițiilor medicale și caloriilor rămase azi
+                {tdee && <span style={{ color: COLORS.accent }}> ({Math.max(0, tdee - totalCals)} kcal disponibile)</span>}.
+              </p>
+              <div style={{ marginBottom: 12 }}>
+                <SLabel>TIP MASĂ</SLabel>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {["toate", "mic dejun", "prânz", "cină", "gustare"].map(t => (
+                    <button key={t} onClick={() => setMealType(t)} style={{
+                      padding: "6px 12px", borderRadius: 20, cursor: "pointer",
+                      border: `1px solid ${mealType === t ? COLORS.accent + "50" : COLORS.cardBorder}`,
+                      background: mealType === t ? COLORS.accentGlow : "transparent",
+                      color: mealType === t ? COLORS.accent : COLORS.textMuted,
+                      fontFamily: FONT, fontSize: 11, textTransform: "capitalize", transition: "all 0.2s",
+                    }}>{t}</button>
+                  ))}
+                </div>
+              </div>
+              <button onClick={getMealIdeas} disabled={ideasLoading} style={{
+                padding: "10px 20px", borderRadius: 12, border: "none", cursor: "pointer",
+                background: ideasLoading ? COLORS.cardBorder : COLORS.accent,
+                color: ideasLoading ? COLORS.textMuted : "white",
+                fontFamily: FONT, fontSize: 12, fontWeight: 600,
+                boxShadow: ideasLoading ? "none" : "0 2px 10px rgba(61,143,95,0.3)",
+              }}>{ideasLoading ? "Se generează..." : "✦ Generează Idei"}</button>
+            </Card>
+
+            {mealIdeas.length > 0 && !mealIdeas[0]?.error && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {mealIdeas.map((idea, i) => (
+                  <Card key={i} style={{ borderColor: `${COLORS.accent}20` }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontFamily: FONT_DISPLAY, fontSize: 15, color: COLORS.text, marginBottom: 3 }}>{idea.name}</div>
+                        <div style={{ fontSize: 18, color: COLORS.accent, fontWeight: 500 }}>
+                          {idea.calories} <span style={{ fontSize: 10, color: COLORS.textMuted }}>kcal</span>
+                        </div>
+                      </div>
+                      <button onClick={() => {
+                        setMeals(p => [...p, {
+                          ...idea, id: Date.now(),
+                          time: new Date().toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit" }),
+                          warnings: [], improvements: [], score: 7, fiber: 0, sugar: 0,
+                        }]);
+                        setTab("tracker");
+                      }} style={{
+                        padding: "7px 13px", borderRadius: 9, border: "none",
+                        background: COLORS.accent, color: "white",
+                        fontFamily: FONT, fontSize: 11, cursor: "pointer", whiteSpace: "nowrap",
+                        fontWeight: 600, boxShadow: "0 2px 6px rgba(61,143,95,0.25)",
+                      }}>+ Adaugă</button>
+                    </div>
+
+                    <div style={{ display: "flex", gap: 14, marginBottom: 10 }}>
+                      {[["Prot", idea.protein], ["Carb", idea.carbs], ["Grăs", idea.fat]].map(([l, v]) => (
+                        <div key={l} style={{ textAlign: "center" }}>
+                          <div style={{ fontSize: 12, color: COLORS.textDim }}>{v}g</div>
+                          <div style={{ fontSize: 9, color: COLORS.textMuted }}>{l}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {idea.ingredients?.length > 0 && (
+                      <div style={{ marginBottom: 8 }}>
+                        <div style={{ fontSize: 9, color: COLORS.textMuted, letterSpacing: "0.06em", marginBottom: 4 }}>INGREDIENTE</div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                          {idea.ingredients.map((ing, j) => (
+                            <span key={j} style={{
+                              fontSize: 11, padding: "3px 10px", borderRadius: 20,
+                              border: `1px solid ${COLORS.cardBorder}`, color: COLORS.textDim,
+                              background: COLORS.bgWarm, fontFamily: FONT,
+                            }}>{ing}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {idea.tip && (
+                      <div style={{ fontSize: 11, color: COLORS.textDim, borderLeft: `3px solid ${COLORS.accent}`, paddingLeft: 10, fontStyle: "italic", fontFamily: FONT, background: COLORS.accentLight, padding: "7px 7px 7px 12px", borderRadius: "0 8px 8px 0" }}>
+                        🌿 {idea.tip}
+                      </div>
+                    )}
+                  </Card>
+                ))}
+              </div>
+            )}
+
+            {mealIdeas[0]?.error && (
+              <div style={{ textAlign: "center", padding: "20px 0", color: COLORS.danger, fontSize: 11 }}>{mealIdeas[0].error}</div>
+            )}
+
+            {mealIdeas.length === 0 && !ideasLoading && (
+              <div style={{ textAlign: "center", padding: "34px 0", color: COLORS.textMuted, fontSize: 12, fontFamily: FONT }}>
+                <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 12, opacity: 0.6 }}>
+                  {VegIllustrations.broccoli(36)}
+                  {VegIllustrations.carrot(36)}
+                  {VegIllustrations.tomato(36)}
+                </div>
+                Apasă „Generează Idei" pentru sugestii personalizate
               </div>
             )}
           </div>
@@ -478,10 +700,11 @@ Scrie 3-4 paragrafe de sfaturi acționabile. Dacă are skin_barrier sau acne_sug
                 Sfaturi adaptate la condițiile tale medicale, obiective, activitatea de azi (<span style={{ color: COLORS.accent }}>{todayActLabel}</span>){tomorrowIsActive && <> și pregătirea pentru mâine (<span style={{ color: COLORS.warn }}>{tomorrowActLabel}</span>)</>} și mesele înregistrate.
               </p>
               <button onClick={getAIAdvice} disabled={aiLoading} style={{
-                padding: "9px 16px", borderRadius: 7, border: "none", cursor: "pointer",
-                background: aiLoading ? "#1a2b1e" : COLORS.accent,
-                color: aiLoading ? COLORS.textMuted : "#0a0f0d",
-                fontFamily: FONT, fontSize: 11, fontWeight: 500,
+                padding: "10px 20px", borderRadius: 12, border: "none", cursor: "pointer",
+                background: aiLoading ? COLORS.cardBorder : COLORS.accent,
+                color: aiLoading ? COLORS.textMuted : "white",
+                fontFamily: FONT, fontSize: 12, fontWeight: 600,
+                boxShadow: aiLoading ? "none" : "0 2px 10px rgba(61,143,95,0.3)",
               }}>{aiLoading ? "Se generează..." : "✦ Obține Sfaturile Mele"}</button>
             </Card>
             {aiAdvice && (
@@ -491,8 +714,11 @@ Scrie 3-4 paragrafe de sfaturi acționabile. Dacă are skin_barrier sau acne_sug
               </Card>
             )}
             {!aiAdvice && !aiLoading && (
-              <div style={{ textAlign: "center", padding: "34px 0", color: COLORS.textMuted, fontSize: 11 }}>
-                <div style={{ fontSize: 24, marginBottom: 6 }}>🤖</div>
+              <div style={{ textAlign: "center", padding: "34px 0", color: COLORS.textMuted, fontSize: 12, fontFamily: FONT }}>
+                <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 12, opacity: 0.5 }}>
+                  {VegIllustrations.broccoli(34)}
+                  {VegIllustrations.avocado(34)}
+                </div>
                 Completează profilul și înregistrează mese pentru cele mai bune sfaturi
               </div>
             )}
@@ -527,7 +753,7 @@ Scrie 3-4 paragrafe de sfaturi acționabile. Dacă are skin_barrier sau acne_sug
               <div style={{ marginTop: 9 }}>
                 <div style={{ fontSize: 9, color: COLORS.textMuted, marginBottom: 4, letterSpacing: "0.06em" }}>NIVEL DE ACTIVITATE DE BAZĂ</div>
                 <select value={profile.activityLevel} onChange={e => setProfile(p => ({ ...p, activityLevel: e.target.value }))}
-                  style={{ ...inputStyle, cursor: "pointer" }}>
+                  style={{ ...inputStyle, cursor: "pointer", appearance: "auto" }}>
                   <option value="sedentary">Sedentar (birou)</option>
                   <option value="lightly_active">Ușor activ (1-3x/săptămână)</option>
                   <option value="moderately_active">Moderat activ (3-5x/săptămână)</option>
@@ -558,7 +784,7 @@ Scrie 3-4 paragrafe de sfaturi acționabile. Dacă are skin_barrier sau acne_sug
                       </span>
                       <select value={actId} onChange={e => setDayActivity(dayKey, e.target.value)}
                         style={{
-                          flex: 1, background: isToday ? "#0e1c10" : "#0d1810",
+                          flex: 1, background: isToday ? COLORS.accentLight : COLORS.bgWarm,
                           border: `1px solid ${isToday ? COLORS.accent + "30" : COLORS.cardBorder}`,
                           borderRadius: 6, padding: "5px 9px", color: COLORS.text,
                           fontFamily: FONT, fontSize: 11, outline: "none", cursor: "pointer",
@@ -601,7 +827,7 @@ Scrie 3-4 paragrafe de sfaturi acționabile. Dacă are skin_barrier sau acne_sug
 
             {/* Ținta calculată */}
             {tdee && (
-              <Card style={{ marginBottom: 12, borderColor: `${COLORS.accent}30` }}>
+              <Card style={{ marginBottom: 12, borderColor: COLORS.accent, background: COLORS.accentLight }}>
                 <SLabel>ȚINTA TA ZILNICĂ</SLabel>
                 <div style={{ fontSize: 28, fontFamily: FONT_DISPLAY, color: COLORS.accent }}>{tdee} <span style={{ fontSize: 12, color: COLORS.textMuted }}>kcal/zi</span></div>
                 <div style={{ fontSize: 10, color: COLORS.textMuted, marginTop: 3 }}>
@@ -616,14 +842,17 @@ Scrie 3-4 paragrafe de sfaturi acționabile. Dacă are skin_barrier sau acne_sug
             )}
 
             <button onClick={() => { setProfileSaved(true); setTab("tracker"); }} style={{
-              width: "100%", padding: "11px", borderRadius: 8, border: "none", cursor: "pointer",
-              background: COLORS.accent, color: "#0a0f0d", fontFamily: FONT, fontSize: 12, fontWeight: 500,
+              width: "100%", padding: "13px", borderRadius: 13, border: "none", cursor: "pointer",
+              background: COLORS.accent, color: "white", fontFamily: FONT, fontSize: 13, fontWeight: 700,
+              boxShadow: "0 4px 14px rgba(61,143,95,0.3)", letterSpacing: "0.01em",
             }}>Salvează Profilul și Începe Urmărirea →</button>
           </div>
         )}
 
-        <div style={{ marginTop: 20, textAlign: "center", fontSize: 9, color: COLORS.textMuted, letterSpacing: "0.05em" }}>
+        <div style={{ marginTop: 24, textAlign: "center", fontSize: 10, color: COLORS.textMuted, letterSpacing: "0.05em", fontFamily: FONT_MONO, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+          {VegIllustrations.leaf(16)}
           NutriCare · Alimentat de AI · Nu înlocuiește sfatul medical
+          {VegIllustrations.leaf(16)}
         </div>
       </div>
     </div>
