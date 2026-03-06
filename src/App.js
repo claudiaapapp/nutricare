@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 const COLORS = {
   bg: "#0a0f0d",
@@ -629,4 +629,3 @@ Scrie 3-4 paragrafe de sfaturi acționabile. Dacă are skin_barrier sau acne_sug
     </div>
   );
 }
-
