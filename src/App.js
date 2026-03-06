@@ -1,4 +1,4 @@
-import React { useState } from "react";
+import React, { useState } from "react";
 
 const COLORS = {
   bg: "#f7f3ed",
