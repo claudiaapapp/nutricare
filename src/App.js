@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 const COLORS = {
   bg: "#f7f3ed",
@@ -208,6 +208,8 @@ export default function App() {
   const [mealIdeas, setMealIdeas] = useState([]);
   const [ideasLoading, setIdeasLoading] = useState(false);
   const [mealType, setMealType] = useState("toate");
+  const [photoBase64, setPhotoBase64] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
 
   const tdee = calcTDEE(profile);
   const totalCals    = meals.reduce((s, m) => s + (m.calories || 0), 0);
@@ -251,26 +253,53 @@ export default function App() {
     setProfile(p => ({ ...p, weekSchedule: { ...p.weekSchedule, [day]: act } }));
   }
 
+  function handlePhotoUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dataUrl = ev.target.result;
+      setPhotoPreview(dataUrl);
+      setPhotoBase64(dataUrl.split(",")[1]);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function clearPhoto() {
+    setPhotoBase64(null);
+    setPhotoPreview(null);
+  }
+
   async function analyzeMeal() {
-    if (!mealInput.trim()) return;
+    if (!mealInput.trim() && !photoBase64) return;
     setAnalyzing(true); setMealAnalysis(null);
     const conds = profile.conditions.length ? `Condiții medicale: ${profile.conditions.join(", ")}.` : "";
     const goals  = profile.goals?.length    ? `Obiective: ${profile.goals.join(", ")}.` : "";
     const actCtx = `Activitate fizică de azi: ${todayActLabel} (calorii arse suplimentar: ${todayExtra} kcal).`;
     const tomorrowCtx = tomorrowIsActive
-      ? `Mâine (${tomorrowDisplayDay}) urmează: ${tomorrowActLabel} (${tomorrowExtra} kcal). Ține cont de asta: dacă masa de seară sau ultima masă a zilei, recomandă carbohidrați complecși și proteine pentru încărcare înainte de antrenament.`
-      : `Mâine (${tomorrowDisplayDay}) este zi de odihnă sau activitate ușoară.`;
-    const prompt = `Analizează această masă: "${mealInput}". ${conds} ${goals} ${actCtx} ${tomorrowCtx} Alergii: ${profile.allergies || "niciuna"}.
-Dacă are acne_sugar: avertizează despre alimente cu indice glicemic ridicat și creșteri ale zahărului în sânge.
-Dacă are skin_barrier: menționează alimente bogate în omega-3, zinc, vitamina E.
-Dacă are hpv: menționează nutrienți care stimulează imunitatea (folat, vit C, vit D).
-Ține cont de activitatea de azi pentru recuperare, și de activitatea de mâine pentru pregătire (carbo-loading, hidratare).
-Răspunde DOAR cu un obiect JSON, fără markdown:
-{"name":"nume scurt masă","calories":număr,"protein":număr,"carbs":număr,"fat":număr,"fiber":număr,"sugar":număr,"warnings":["..."],"improvements":["...","..."],"score":număr_1_la_10}`;
+      ? `Mâine (${tomorrowDisplayDay}) urmează: ${tomorrowActLabel} (${tomorrowExtra} kcal). Recomandă carbohidrați complecși și proteine pentru pregătire.`
+      : `Mâine (${tomorrowDisplayDay}) este zi de odihnă.`;
+    const jsonInstruction = `Răspunde DOAR cu un obiect JSON, fără markdown: {"name":"nume scurt masă","calories":număr,"protein":număr,"carbs":număr,"fat":număr,"fiber":număr,"sugar":număr,"warnings":["..."],"improvements":["...","..."],"score":număr_1_la_10}`;
+    const textPrompt = `Analizează această masă${mealInput ? `: "${mealInput}"` : " din imaginea atașată"}. ${conds} ${goals} ${actCtx} ${tomorrowCtx} Alergii: ${profile.allergies || "niciuna"}.
+Dacă are acne_sugar: avertizează despre alimente cu indice glicemic ridicat.
+Dacă are skin_barrier: menționează omega-3, zinc, vitamina E.
+Dacă are hpv: menționează folat, vit C, vit D.
+${jsonInstruction}`;
+
+    let messageContent;
+    if (photoBase64) {
+      messageContent = [
+        { type: "image", source: { type: "base64", media_type: "image/jpeg", data: photoBase64 } },
+        { type: "text", text: textPrompt }
+      ];
+    } else {
+      messageContent = textPrompt;
+    }
+
     try {
       const res  = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, messages: [{ role: "user", content: prompt }] }),
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, messages: [{ role: "user", content: messageContent }] }),
       });
       const data = await res.json();
       const text = data.content?.map(i => i.text || "").join("") || "";
@@ -286,8 +315,10 @@ Răspunde DOAR cu un obiect JSON, fără markdown:
     setMeals(p => [...p, {
       ...mealAnalysis, id: Date.now(),
       time: new Date().toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit" }),
+      photo: photoPreview || null,
     }]);
     setMealInput(""); setMealAnalysis(null);
+    clearPhoto();
   }
 
   async function getAIAdvice() {
@@ -481,18 +512,47 @@ Asigură-te că fiecare masă e potrivită pentru condițiile medicale și obiec
                   {tomorrowIsActive && <div style={{ marginTop: todayExtra > 0 ? 4 : 0, color: COLORS.textDim }}>⚡ Mâine ai <span style={{ color: COLORS.warn, fontWeight: 600 }}>{tomorrowActLabel}</span> — analiza va sugera alimente pentru pregătire.</div>}
                 </div>
               )}
-              <div style={{ display: "flex", gap: 7 }}>
+              {/* Text input row */}
+              <div style={{ display: "flex", gap: 7, marginBottom: 8 }}>
                 <input value={mealInput} onChange={e => setMealInput(e.target.value)}
                   onKeyDown={e => e.key === "Enter" && analyzeMeal()}
                   placeholder="ex: 2 ouă cu pâine prăjită și cafea..."
                   style={{ ...inputStyle, flex: 1 }} />
-                <button onClick={analyzeMeal} disabled={analyzing || !mealInput.trim()} style={{
+                <button onClick={analyzeMeal} disabled={analyzing || (!mealInput.trim() && !photoBase64)} style={{
                   padding: "9px 15px", borderRadius: 10, border: "none", cursor: "pointer",
                   background: analyzing ? COLORS.cardBorder : COLORS.accent,
                   color: analyzing ? COLORS.textMuted : "white",
                   fontFamily: FONT, fontSize: 12, fontWeight: 600, whiteSpace: "nowrap",
                   boxShadow: analyzing ? "none" : "0 2px 8px rgba(61,143,95,0.3)",
                 }}>{analyzing ? "Se analizează..." : "Analizează →"}</button>
+              </div>
+
+              {/* Photo upload */}
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <label style={{
+                  display: "flex", alignItems: "center", gap: 6, padding: "7px 13px",
+                  borderRadius: 9, border: `1.5px dashed ${COLORS.cardBorder}`,
+                  background: COLORS.bgWarm, cursor: "pointer",
+                  fontFamily: FONT, fontSize: 12, color: COLORS.textMuted,
+                  transition: "all 0.2s",
+                }}>
+                  📷 Adaugă poză
+                  <input type="file" accept="image/*" capture="environment"
+                    onChange={handlePhotoUpload}
+                    style={{ display: "none" }} />
+                </label>
+                {photoPreview && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                    <img src={photoPreview} alt="masă"
+                      style={{ width: 44, height: 44, borderRadius: 9, objectFit: "cover", border: `2px solid ${COLORS.accent}` }} />
+                    <button onClick={clearPhoto} style={{
+                      background: COLORS.dangerLight, border: `1px solid ${COLORS.danger}30`,
+                      borderRadius: 7, padding: "4px 9px", cursor: "pointer",
+                      color: COLORS.danger, fontSize: 11, fontFamily: FONT,
+                    }}>✕ Șterge</button>
+                    <span style={{ fontSize: 11, color: COLORS.accent, fontFamily: FONT }}>✓ Poza e gata de analizat</span>
+                  </div>
+                )}
               </div>
 
               {mealAnalysis && !mealAnalysis.error && (
@@ -542,18 +602,23 @@ Asigură-te că fiecare masă e potrivită pentru condițiile medicale și obiec
                 {meals.map((meal, i) => (
                   <div key={meal.id} style={{
                     display: "flex", alignItems: "center", justifyContent: "space-between",
-                    padding: "8px 0", borderBottom: i < meals.length - 1 ? `1px solid ${COLORS.cardBorder}` : "none",
+                    padding: "9px 0", borderBottom: i < meals.length - 1 ? `1px solid ${COLORS.cardBorder}` : "none",
+                    gap: 10,
                   }}>
-                    <div>
-                      <div style={{ fontSize: 12, color: COLORS.text }}>{meal.name}</div>
-                      <div style={{ fontSize: 9, color: COLORS.textMuted, marginTop: 1 }}>
+                    {meal.photo && (
+                      <img src={meal.photo} alt={meal.name}
+                        style={{ width: 46, height: 46, borderRadius: 10, objectFit: "cover", flexShrink: 0, border: `1.5px solid ${COLORS.cardBorder}` }} />
+                    )}
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 12, color: COLORS.text, fontWeight: 500 }}>{meal.name}</div>
+                      <div style={{ fontSize: 10, color: COLORS.textMuted, marginTop: 1 }}>
                         {meal.time} · P:{meal.protein}g C:{meal.carbs}g G:{meal.fat}g Zahăr:{meal.sugar}g
                       </div>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                      <span style={{ fontSize: 13, color: COLORS.accent }}>{meal.calories}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 7, flexShrink: 0 }}>
+                      <span style={{ fontSize: 13, color: COLORS.accent, fontWeight: 600 }}>{meal.calories} kcal</span>
                       <button onClick={() => setMeals(p => p.filter(m => m.id !== meal.id))}
-                        style={{ background: "none", border: "none", color: COLORS.textMuted, cursor: "pointer", fontSize: 14 }}>×</button>
+                        style={{ background: "none", border: "none", color: COLORS.textMuted, cursor: "pointer", fontSize: 16, lineHeight: 1 }}>×</button>
                     </div>
                   </div>
                 ))}
