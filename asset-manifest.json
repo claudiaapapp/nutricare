@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/nutricare/static/css/main.e6c13ad2.css",
-    "main.js": "/nutricare/static/js/main.8b9029ed.js",
+    "main.js": "/nutricare/static/js/main.3d45fbf4.js",
     "static/js/453.d24257b6.chunk.js": "/nutricare/static/js/453.d24257b6.chunk.js",
     "index.html": "/nutricare/index.html",
     "main.e6c13ad2.css.map": "/nutricare/static/css/main.e6c13ad2.css.map",
-    "main.8b9029ed.js.map": "/nutricare/static/js/main.8b9029ed.js.map",
+    "main.3d45fbf4.js.map": "/nutricare/static/js/main.3d45fbf4.js.map",
     "453.d24257b6.chunk.js.map": "/nutricare/static/js/453.d24257b6.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.e6c13ad2.css",
-    "static/js/main.8b9029ed.js"
+    "static/js/main.3d45fbf4.js"
   ]
 }
